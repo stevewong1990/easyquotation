@@ -18,18 +18,23 @@ if PY_VERSION < (3, 5):
 def use(source):
     if source in ['sina']:
         return Sina()
-    if source in ['leverfun', 'lf']:
+    elif source in ['leverfun', 'lf']:
         return Leverfun()
-    if source in ['jsl']:
+    elif source in ['jsl']:
         return Jsl()
-    if source in ['qq', 'tencent']:
+    elif source in ['qq', 'tencent']:
         return Tencent()
-    if source in ['boc']:
+    elif source in ['boc']:
         return Boc()
-    if source in ["timekline"]:
+    elif source in ["timekline"]:
         return TimeKline()
-    if source in ['daykline']:
+    elif source in ['daykline']:
         return DayKline()
-    if source in ['hkquote']:
+    elif source in ['hkquote']:
         return HKQuote()
-    
+    else:
+        print('this source not exist')
+
+
+if __name__ == '__main__':
+    pass

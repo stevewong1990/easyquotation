@@ -1,12 +1,9 @@
 # coding:utf8
-import re
-import time
 import json
-
+import yarl
 import aiohttp
 import asyncio
-import easyutils
-import yarl
+
 from .basequotation import BaseQuotation
 
 """
@@ -40,10 +37,10 @@ class DayKline(BaseQuotation):
                 continue
 
             status_code = daykline.get("code")
-            if status_code not in ("0",0):
+            if status_code not in ("0", 0):
                 # 当返回错误状态码时候，不做处理
                 continue
-            daykline= daykline.get("data")
+            daykline = daykline.get("data")
             for key, value in daykline.items():
                 stock_code = key[2:]
                 
@@ -62,7 +59,9 @@ class DayKline(BaseQuotation):
             self._session = aiohttp.ClientSession()
         headers = {
             'Accept-Encoding': 'gzip, deflate, sdch',
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.100 Safari/537.36'
+            'User-Agent': ('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36'
+                           ' (KHTML, like Gecko) Chrome/54.0.2840.100'
+                           ' Safari/537.36')
         }
         print(params)
         if len(params) > 1:
@@ -71,22 +70,21 @@ class DayKline(BaseQuotation):
         else:
             stock_code = params
             days = 360
-        url = yarl.URL(self.stock_api %(stock_code,days), encoded=True)
+        url = yarl.URL(self.stock_api % (stock_code, days), encoded=True)
         print(url)
         try:
             async with self._session.get(url, timeout=10, headers=headers) as r:
                 asyncio.sleep(0.1)
                 response_text = await r.text()
-                # print(response_text)
-                return  response_text
+                return response_text
         except asyncio.TimeoutError:
             return ''
 
-    def get_stock_data(self, stock_list,days=360, **kwargs):
+    def get_stock_data(self, stock_list, days=360, **kwargs):
         coroutines = []
 
         for params in stock_list:
-            coroutine = self.get_stocks_by_range(params,days)
+            coroutine = self.get_stocks_by_range(params, days)
             coroutines.append(coroutine)
         try:
             loop = asyncio.get_event_loop()
@@ -94,7 +92,8 @@ class DayKline(BaseQuotation):
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
         res = loop.run_until_complete(asyncio.gather(*coroutines))
-        return self.format_response_data([x for x in res if x is not None], **kwargs)
+        return self.format_response_data(
+            [x for x in res if x is not None], **kwargs)
 
 
 if __name__ == "__main__":
