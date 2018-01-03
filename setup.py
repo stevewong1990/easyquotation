@@ -1,7 +1,6 @@
 # coding:utf8
 from setuptools import setup
 
-import easyquotation
 
 long_desc = """
 easyquotation
@@ -177,7 +176,7 @@ easyquotation.update_stock_codes()
 
 setup(
         name='easyquotation',
-        version=easyquotation.__version__,
+        version='0.1',
         description='A utility for Fetch China Stock Info',
         long_description=long_desc,
         author='shidenggui',
