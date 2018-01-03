@@ -22,7 +22,6 @@ url = "http://web.ifzq.gtimg.cn/appstock/app/hkfqkline/get?_var=kline_dayqfq&par
 
 class DayKline(BaseQuotation):
     """腾讯免费行情获取"""
-    stock_api = "http://web.ifzq.gtimg.cn/appstock/app/hkfqkline/get?_var=kline_dayqfq&param=hk%s,day,,,%s,qfq&r=0.7773272375526847"
     max_num = 1
 
     def format_response_data(self, rep_data, prefix=False):
@@ -63,15 +62,14 @@ class DayKline(BaseQuotation):
                            ' (KHTML, like Gecko) Chrome/54.0.2840.100'
                            ' Safari/537.36')
         }
-        print(params)
         if len(params) > 1:
-            stock_code = params[0]
+            stock_code = params[0].lower()
             days = params[1]
         else:
-            stock_code = params
-            days = 360
-        url = yarl.URL(self.stock_api % (stock_code, days), encoded=True)
-        print(url)
+            stock_code = params.lower()
+            days = 60
+        api_url = get_api_url(stock_code[:2])
+        url = yarl.URL(api_url % (stock_code, days), encoded=True)
         try:
             async with self._session.get(url, timeout=10, headers=headers) as r:
                 asyncio.sleep(0.1)
@@ -94,6 +92,20 @@ class DayKline(BaseQuotation):
         res = loop.run_until_complete(asyncio.gather(*coroutines))
         return self.format_response_data(
             [x for x in res if x is not None], **kwargs)
+
+
+def get_api_url(code):
+    url = "http://web.ifzq.gtimg.cn/appstock/app/{}?_var=kline_dayqfq&param=hk%s,day,,,%s,{}&r=0.7773272375526847"
+    if code == "sz":
+        api_url = url.format("fqkline/get", "qfq")
+    elif code == "hk":
+        api_url = url.format("hkfqkline/get", "qfq")
+    elif code == "sh":
+        api_url = url.format("kline/kline", "")
+    else:
+        # TODO support US
+        pass
+    return api_url
 
 
 if __name__ == "__main__":
