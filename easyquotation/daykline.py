@@ -32,7 +32,6 @@ class DayKline(BaseQuotation):
             try:
                 daykline = json.loads(daykline)
             except Exception as e:
-                print(e)
                 continue
 
             status_code = daykline.get("code")
@@ -40,16 +39,23 @@ class DayKline(BaseQuotation):
                 # 当返回错误状态码时候，不做处理
                 continue
             daykline = daykline.get("data")
+            if not isinstance(daykline, dict):
+                continue
+
             for key, value in daykline.items():
-                stock_code = key[2:]
+                stock_code = key
                 
                 _stmt = value.get('qfqday')
                 if _stmt is None:
                     _stmt = value.get('day')
             if _stmt is None:
                 continue
-
+            
             stock_dict[stock_code] = _stmt
+            stock_dict = {
+                "stock_code": stock_code,
+                "kline": _stmt
+            }
 
         return stock_dict
 
@@ -70,18 +76,19 @@ class DayKline(BaseQuotation):
             days = 60
         api_url = get_api_url(stock_code[:2])
         url = yarl.URL(api_url % (stock_code, days), encoded=True)
+        print(url)
         try:
             async with self._session.get(url, timeout=10, headers=headers) as r:
                 asyncio.sleep(0.1)
                 response_text = await r.text()
-                return response_text
+                return response_text.replace('kline_dayqfq=', '')
         except asyncio.TimeoutError:
             return ''
-
-    def get_stock_data(self, stock_list, days=360, **kwargs):
+    
+    def get_stock_data(self, stock_list, days=60, **kwargs):
         coroutines = []
 
-        for params in stock_list:
+        for params in [x for x in stock_list if x]:
             coroutine = self.get_stocks_by_range(params, days)
             coroutines.append(coroutine)
         try:
@@ -95,7 +102,7 @@ class DayKline(BaseQuotation):
 
 
 def get_api_url(code):
-    url = "http://web.ifzq.gtimg.cn/appstock/app/{}?_var=kline_dayqfq&param=hk%s,day,,,%s,{}&r=0.7773272375526847"
+    url = "http://web.ifzq.gtimg.cn/appstock/app/{}?_var=kline_dayqfq&param=%s,day,,,%s,{}&r=0.7773272375526847"
     if code == "sz":
         api_url = url.format("fqkline/get", "qfq")
     elif code == "hk":
@@ -104,7 +111,8 @@ def get_api_url(code):
         api_url = url.format("kline/kline", "")
     else:
         # TODO support US
-        pass
+        api_url = url.format("", "")
+
     return api_url
 
 
